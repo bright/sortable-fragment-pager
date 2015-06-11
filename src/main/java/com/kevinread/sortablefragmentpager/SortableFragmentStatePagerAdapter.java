@@ -66,7 +66,7 @@ import java.util.Arrays;
  *      complete}
  */
 public abstract class SortableFragmentStatePagerAdapter extends PagerAdapter {
-    private static final String TAG = "SortableFragmentStatePagerAdapter";
+    private static final String TAG = "SortableStateAdapter";
     private static final boolean DEBUG = false;
 
     private final FragmentManager mFragmentManager;
@@ -84,9 +84,21 @@ public abstract class SortableFragmentStatePagerAdapter extends PagerAdapter {
     }
 
     /**
-     * Return the Fragment associated with a specified position.
+     * Create the initial set of item IDs. Run this after you have set your adapter data.
      */
-    public abstract Fragment getItem(int position);
+    public void createIdCache() {
+        // If we have already stored ids, don't overwrite them
+        if (mItemIds.length == 0) {
+            // getCount might have overhead, so run it as late as possible
+            final int count = getCount();
+            if (count > 0) {
+                mItemIds = new long[count];
+                for (int i = 0; i < count; i++) {
+                    mItemIds[i] = getItemId(i);
+                }
+            }
+        }
+    }
 
     /**
      * Return a unique identifier for the item at the given position.
@@ -95,6 +107,13 @@ public abstract class SortableFragmentStatePagerAdapter extends PagerAdapter {
 
     @Override
     public void startUpdate(ViewGroup container) {
+    }
+
+    @Override
+    public void notifyDataSetChanged() {
+        checkForIdChanges();
+
+        super.notifyDataSetChanged();
     }
 
     private void checkForIdChanges() {
@@ -144,30 +163,6 @@ public abstract class SortableFragmentStatePagerAdapter extends PagerAdapter {
     }
 
     @Override
-    public void notifyDataSetChanged() {
-        checkForIdChanges();
-
-        super.notifyDataSetChanged();
-    }
-
-    /**
-     * Create the initial set of item IDs. Run this after you have set your adapter data.
-     */
-    public void createIdCache() {
-        // If we have already stored ids, don't overwrite them
-        if (mItemIds.length == 0) {
-            // getCount might have overhead, so run it as late as possible
-            final int count = getCount();
-            if (count > 0) {
-                mItemIds = new long[count];
-                for (int i = 0; i < count; i++) {
-                    mItemIds[i] = getItemId(i);
-                }
-            }
-        }
-    }
-
-    @Override
     public Object instantiateItem(ViewGroup container, int position) {
 
         createIdCache();
@@ -205,6 +200,11 @@ public abstract class SortableFragmentStatePagerAdapter extends PagerAdapter {
 
         return fragment;
     }
+
+    /**
+     * Return the Fragment associated with a specified position.
+     */
+    public abstract Fragment getItem(int position);
 
     @Override
     public void destroyItem(ViewGroup container, int position, Object object) {
